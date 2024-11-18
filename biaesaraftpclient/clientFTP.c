@@ -21,6 +21,7 @@ INSPIRED BY: https://gist.github.com/XBachirX/865b00ba7a7c86b4fc2d7443b2c4f238
 #include <time.h>
 #include <netdb.h>
 #include <regex.h>
+#include <stdarg.h>
 
 #define FTP_PORT 21
 #define MAX_LENGTH 1024
