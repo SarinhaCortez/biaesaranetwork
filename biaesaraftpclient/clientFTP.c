@@ -180,19 +180,43 @@ int create_control_socket(const char *ip, int port) {
 int authenticate(int socket, const char* user, const char* pass) {
     char command[MAX_LENGTH];
     char response[MAX_LENGTH];
+    int response_code;
     
     // Send username
     snprintf(command, sizeof(command), "USER %s\r\n", user);
-    write(socket, command, strlen(command));
-    if (read_ftp_response(socket, response) != SV_READY4PASS) {
-        log_message(LOG_ERROR, "Username not accepted");
+    if (write(socket, command, strlen(command)) < 0) {
+        log_message(LOG_ERROR, "Failed to send username: %s", strerror(errno));
         return -1;
+    }
+    
+    response_code = read_ftp_response(socket, response);
+    
+    switch (response_code) {
+        case SV_READY4PASS:
+            break;
+        case SV_LOGINSUCCESS:
+            log_message(LOG_INFO, "Logged in without password");
+            return response_code;
+        default:
+            log_message(LOG_ERROR, "Unexpected response to USER command: %d", response_code);
+            return -1;
     }
     
     // Send password
     snprintf(command, sizeof(command), "PASS %s\r\n", pass);
-    write(socket, command, strlen(command));
-    return read_ftp_response(socket, response);
+    if (write(socket, command, strlen(command)) < 0) {
+        log_message(LOG_ERROR, "Failed to send password: %s", strerror(errno));
+        return -1;
+    }
+    
+    response_code = read_ftp_response(socket, response);
+    
+    if (response_code == SV_LOGINSUCCESS) {
+        return response_code;
+    } else {
+        log_message(LOG_ERROR, "Authentication failed. Response: %d", response_code);
+        return -1;
+    }
 }
 
 // Enter passive mode
@@ -202,13 +226,26 @@ int enter_passive_mode(int socket, char *ip, int *port) {
     int ip1, ip2, ip3, ip4, port1, port2;
     
     write(socket, command, strlen(command));
-    if (read_ftp_response(socket, response) != SV_PASSIVE) {
+    int response_code = read_ftp_response(socket, response);
+    
+    if (response_code != SV_PASSIVE) {
+        log_message(LOG_ERROR, "Passive mode request failed. Response: %d", response_code);
         return -1;
     }
     
-    // Parse PASV response for IP and port
+    // More robust parsing of PASV response
     char *start = strchr(response, '(');
-    sscanf(start, "(%d,%d,%d,%d,%d,%d)", &ip1, &ip2, &ip3, &ip4, &port1, &port2);
+    if (!start) {
+        log_message(LOG_ERROR, "Invalid PASV response format");
+        return -1;
+    }
+    
+    if (sscanf(start, "(%d,%d,%d,%d,%d,%d)", 
+               &ip1, &ip2, &ip3, &ip4, &port1, &port2) != 6) {
+        log_message(LOG_ERROR, "Failed to parse IP and port from PASV response");
+        return -1;
+    }
+    
     snprintf(ip, MAX_LENGTH, "%d.%d.%d.%d", ip1, ip2, ip3, ip4);
     *port = port1 * 256 + port2;
     
@@ -217,22 +254,38 @@ int enter_passive_mode(int socket, char *ip, int *port) {
 
 // Read FTP server response
 int read_ftp_response(int socket, char* buffer) {
-    int code;
-    char *line = buffer;
     ssize_t n;
+    size_t total_read = 0;
     
-    do {
-        n = read(socket, line, MAX_LENGTH - (line - buffer));
+    memset(buffer, 0, MAX_LENGTH);
+    
+    while (total_read < MAX_LENGTH - 1) {
+        n = read(socket, buffer + total_read, MAX_LENGTH - total_read - 1);
         if (n <= 0) {
-            log_message(LOG_ERROR, "Failed to read server response");
+            log_message(LOG_ERROR, "Failed to read server response: %s", strerror(errno));
             return -1;
         }
-        line[n] = '\0';
         
-        while (*line != '\0' && (line - buffer) < MAX_LENGTH) line++;
-    } while (*(line-1) != '\n');
+        total_read += n;
+        buffer[total_read] = '\0';
+        
+        // Check if response is complete (ends with \r\n)
+        if (total_read >= 2 && 
+            buffer[total_read-2] == '\r' && 
+            buffer[total_read-1] == '\n') {
+            break;
+        }
+    }
     
-    sscanf(buffer, "%d", &code);
+    // Log full server response for debugging
+    log_message(LOG_DEBUG, "Full server response: %s", buffer);
+    
+    int code;
+    if (sscanf(buffer, "%d", &code) != 1) {
+        log_message(LOG_ERROR, "Could not parse response code");
+        return -1;
+    }
+    
     return code;
 }
 
