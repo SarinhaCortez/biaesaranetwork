@@ -4,7 +4,7 @@
  TO RUN:
 
 gcc -o clientFTP clientFTP.c
-
+TEM QUE ABRIR ,MAIS PORTAS NO PASSIVE MODE
 ./clientFTP URL
 INSPIRED BY: https://gist.github.com/XBachirX/865b00ba7a7c86b4fc2d7443b2c4f238
 */
