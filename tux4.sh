@@ -13,7 +13,7 @@ arp -a
 #=============================
 #
 #
-#/interface bridge add name=bridge100 
+#/interface bridge add name=bridge30 
 #/interface bridge print
 #
 #=============================
