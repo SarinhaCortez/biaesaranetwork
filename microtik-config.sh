@@ -42,7 +42,7 @@ sleep 1
 echo -e "/interface bridge port remove [find interface=ether9]\r\n" > /dev/ttyS0
 sleep 1
 
-echo -e "/interface bridge port remove [find interface=ether10]\r\n" > /dev/ttyS0
+echo -e "/interface bridge port remove [find interface=ether4]\r\n" > /dev/ttyS0
 sleep 1
 
 echo -e "/interface bridge port remove [find interface=ether11]\r\n" > /dev/ttyS0
@@ -87,20 +87,20 @@ sleep 1
 echo -e "/interface bridge port remove [find interface=ether24]\r\n" > /dev/ttyS0
 sleep 1
 
-echo -e "/interface bridge add name=bridge100\r\n" > /dev/ttyS0
+echo -e "/interface bridge add name=bridge40\r\n" > /dev/ttyS0
 sleep 1
 
-echo -e "/interface bridge add name=bridge101\r\n" > /dev/ttyS0
+echo -e "/interface bridge add name=bridge41\r\n" > /dev/ttyS0
 sleep 1
 
-echo -e "/interface bridge port add bridge=bridge100 interface=ether15\r\n" > /dev/ttyS0
+echo -e "/interface bridge port add bridge=bridge40 interface=ether15\r\n" > /dev/ttyS0
 sleep 1
 
-echo -e "/interface bridge port add bridge=bridge100 interface=ether16\r\n" > /dev/ttyS0
+echo -e "/interface bridge port add bridge=bridge40 interface=ether16\r\n" > /dev/ttyS0
 sleep 1
 
-echo -e "/interface bridge port add bridge=bridge101 interface=ether22\r\n" > /dev/ttyS0
+echo -e "/interface bridge port add bridge=bridge41 interface=ether22\r\n" > /dev/ttyS0
 sleep 1
 
-echo -e "/interface bridge port add bridge=bridge101 interface=ether24\r\n" > /dev/ttyS0
+echo -e "/interface bridge port add bridge=bridge41 interface=ether24\r\n" > /dev/ttyS0
 sleep 1

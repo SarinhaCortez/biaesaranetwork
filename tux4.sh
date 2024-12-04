@@ -5,7 +5,7 @@
 #==========================================================================
 
 
-ifconfig eth1 172.16.100.254/24 netmask 255.255.255.0
+ifconfig eth1 172.16.40.254/24 netmask 255.255.255.0
 route -n
 arp -a
 
@@ -13,7 +13,7 @@ arp -a
 #=============================
 #
 #
-#/interface bridge add name=bridge100 
+#/interface bridge add name=bridge40 
 #/interface bridge print
 #
 #=============================
