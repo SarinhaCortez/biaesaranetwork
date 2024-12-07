@@ -1,11 +1,10 @@
-/**      (C)2000-2021 FEUP
- *       tidy up some includes and parameters
+/** (C)2000-2021 FEUP
+ *  tidy up some includes and parameters
 
-INSPIRED BY: https://gist.github.com/XBachirX/865b00ba7a7c86b4fc2d7443b2c4f238
 */
 #include "clientFTP.h"
 
-// Logging function implementation)
+// Logging function
 void log_message(const char* level, const char* format, ...) {
     time_t now;
     char timestamp[26];
@@ -25,7 +24,7 @@ void log_message(const char* level, const char* format, ...) {
     fflush(stdout);
 }
 
-// Parse FTP URL
+// URL parsing and validation
 int parse_url(char *input, struct URL *url) {
     regex_t regex;
     regmatch_t matches[4];
@@ -191,7 +190,6 @@ int enter_passive_mode(int socket, char *ip, int *port) {
 }
 
 // Read FTP server response
-
 int read_ftp_response(int socket, char* buffer) {
     ssize_t n;
     size_t total_read = 0;
@@ -234,8 +232,6 @@ int read_ftp_response(int socket, char* buffer) {
         }
     }
     
-    log_message(LOG_DEBUG, "Full server response: %s", buffer);
-
     return code;
 }
 
@@ -251,7 +247,6 @@ int request_file(int socket, const char *resource) {
     }
 
     int code = read_ftp_response(socket, response);
-    log_message(LOG_DEBUG, "RETR response: %s", response);
     return code;
 }
 

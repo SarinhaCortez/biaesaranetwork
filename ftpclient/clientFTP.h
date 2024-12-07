@@ -42,7 +42,6 @@ INSPIRED BY: https://gist.github.com/XBachirX/865b00ba7a7c86b4fc2d7443b2c4f238
 
 #define LOG_INFO    "[INFO] "
 #define LOG_ERROR   "[ERROR] "
-#define LOG_DEBUG   "[DEBUG] "
 
 // URL structure
 struct URL {
@@ -54,7 +53,6 @@ struct URL {
     char file[MAX_LENGTH];
 };
 
-// Function declarations
 void log_message(const char* level, const char* format, ...);
 int parse_url(char *input, struct URL *url);
 int create_control_socket(const char *ip, int port);
