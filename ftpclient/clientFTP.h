@@ -11,7 +11,7 @@ INSPIRED BY: https://gist.github.com/XBachirX/865b00ba7a7c86b4fc2d7443b2c4f238
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/stat.h>
-#include <sys/sendfile.h>
+#include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,6 +32,7 @@ INSPIRED BY: https://gist.github.com/XBachirX/865b00ba7a7c86b4fc2d7443b2c4f238
 #define SV_LOGINSUCCESS 230
 #define SV_PASSIVE 227
 #define SV_READY4TRANSFER 150
+#define SV_DATACONNECTION_OPEN 125
 #define SV_TRANSFER_COMPLETE 226
 #define SV_GOODBYE 221
 
