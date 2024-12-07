@@ -340,16 +340,19 @@ int main(int argc, char **argv) {
         close(control_socket);
         return 1;
     }
-    
-    if (request_file(control_socket, url.resource) != SV_READY4TRANSFER) {
+
+    int transfer_status = request_file(control_socket, url.resource);
+    if (transfer_status != SV_READY4TRANSFER && transfer_status != SV_DATACONNECTION_OPEN) {
         log_message(LOG_ERROR, "Failed to request file");
         close_connections(control_socket, data_socket);
         return 1;
     }
     
     log_message(LOG_INFO, "Downloading %s...", url.file);
-    if (receive_file(control_socket, data_socket, url.file) != SV_TRANSFER_COMPLETE) {
-        log_message(LOG_ERROR, "Failed to receive file");
+    int received_status = receive_file(control_socket, data_socket, url.file);
+
+    if (received_status != SV_TRANSFER_COMPLETE) {
+        log_message(LOG_ERROR, "Might have failed to receive file. Check your files.");
         close_connections(control_socket, data_socket);
         return 1;
     }
@@ -358,4 +361,4 @@ int main(int argc, char **argv) {
     log_message(LOG_INFO, "Download completed successfully");
     
     return 0;
-}.
+}
