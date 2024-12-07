@@ -22,36 +22,27 @@ INSPIRED BY: https://gist.github.com/XBachirX/865b00ba7a7c86b4fc2d7443b2c4f238
 #include <regex.h>
 #include <stdarg.h>
 
-#define FTP_PORT 21
-#define MAX_LENGTH 1024
-#define MAX_FILENAME_LEN 256
-#define RECV_TIMEOUT_SECS 30
+#define PORT 21
+#define LEN 1024
 
-#define SV_READY4AUTH 220
-#define SV_READY4PASS 331
-#define SV_LOGINSUCCESS 230
-#define SV_PASSIVE 227
-#define SV_READY4TRANSFER 150
-#define SV_DATACONNECTION_OPEN 125
-#define SV_TRANSFER_COMPLETE 226
-#define SV_GOODBYE 221
+//status
+#define ST_DATACONNECTION_OPEN 125
+#define ST_READY4TRANSF 150
+#define ST_READY4AUTH 220
+#define ST_GOODBYE 221
+#define ST_TRANSFER_COMPLETE 226
+#define ST_PASVMODE 227
+#define ST_LOGINSUCCESS 230
+#define ST_READY4PASS 331
 
-#define URL_PATTERN "ftp://([^:/@]+:[^:/@]+@)?([^/]+)/(.*)"
-#define DEFAULT_USER "anonymous"
-#define DEFAULT_PASSWORD "anonymous"
+#define DF_USR "anonymous"
+#define DF_PWD "anonymous"
 
 #define LOG_INFO    "[INFO] "
 #define LOG_ERROR   "[ERROR] "
 
 // URL structure
-struct URL {
-    char user[MAX_LENGTH];
-    char password[MAX_LENGTH];
-    char host[MAX_LENGTH];
-    char ip[MAX_LENGTH];
-    char resource[MAX_LENGTH];
-    char file[MAX_LENGTH];
-};
+struct URL { char user[LEN],password[LEN],host[LEN],ip[LEN],resource[LEN],file[LEN] };
 
 void log_message(const char* level, const char* format, ...);
 int parse_url(char *input, struct URL *url);

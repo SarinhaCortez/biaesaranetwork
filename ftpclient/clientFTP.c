@@ -42,14 +42,14 @@ int parse_url(char *input, struct URL *url) {
     }
     
     if (matches[1].rm_so != -1) {
-        char credentials[MAX_LENGTH];
+        char credentials[LEN];
         int len = matches[1].rm_eo - matches[1].rm_so - 1; 
         strncpy(credentials, input + matches[1].rm_so, len);
         credentials[len] = '\0';
         sscanf(credentials, "%[^:]:%s", url->user, url->password);
     } else {
-        strcpy(url->user, DEFAULT_USER);
-        strcpy(url->password, DEFAULT_PASSWORD);
+        strcpy(url->user, DF_USR);
+        strcpy(url->password, DF_PWD);
     }
     
     int host_len = matches[2].rm_eo - matches[2].rm_so;
@@ -93,14 +93,6 @@ int create_control_socket(const char *ip, int port) {
         return -1;
     }
     
-    timeout.tv_sec = RECV_TIMEOUT_SECS;
-    timeout.tv_usec = 0;
-    if (setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-        log_message(LOG_ERROR, "Failed to set socket timeout");
-        close(socket_desc);
-        return -1;
-    }
-    
     server.sin_addr.s_addr = inet_addr(ip);
     server.sin_family = AF_INET;
     server.sin_port = htons(port);
@@ -116,10 +108,9 @@ int create_control_socket(const char *ip, int port) {
 
 // Authenticate with FTP server
 int authenticate(int socket, const char* user, const char* pass) {
-    char command[MAX_LENGTH];
-    char response[MAX_LENGTH];
+    char command[LEN];
+    char response[LEN];
     int response_code;
-    
 
     snprintf(command, sizeof(command), "USER %s\r\n", user);
     if (write(socket, command, strlen(command)) < 0) {
@@ -130,9 +121,9 @@ int authenticate(int socket, const char* user, const char* pass) {
     response_code = read_ftp_response(socket, response);
     
     switch (response_code) {
-        case SV_READY4PASS:
+        case ST_READY4PASS:
             break;
-        case SV_LOGINSUCCESS:
+        case ST_LOGINSUCCESS:
             log_message(LOG_INFO, "Logged in without password");
             return response_code;
         default:
@@ -149,7 +140,7 @@ int authenticate(int socket, const char* user, const char* pass) {
     
     response_code = read_ftp_response(socket, response);
     
-    if (response_code == SV_LOGINSUCCESS) {
+    if (response_code == ST_LOGINSUCCESS) {
         return response_code;
     } else {
         log_message(LOG_ERROR, "Authentication failed. Response: %d", response_code);
@@ -160,13 +151,13 @@ int authenticate(int socket, const char* user, const char* pass) {
 // Enter passive mode
 int enter_passive_mode(int socket, char *ip, int *port) {
     char command[] = "PASV\r\n";
-    char response[MAX_LENGTH];
+    char response[LEN];
     int ip1, ip2, ip3, ip4, port1, port2;
     
     write(socket, command, strlen(command));
     int response_code = read_ftp_response(socket, response);
     
-    if (response_code != SV_PASSIVE) {
+    if (response_code != ST_PASVMODE) {
         log_message(LOG_ERROR, "Passive mode request failed. Response: %d", response_code);
         return -1;
     }
@@ -183,7 +174,7 @@ int enter_passive_mode(int socket, char *ip, int *port) {
         return -1;
     }
     
-    snprintf(ip, MAX_LENGTH, "%d.%d.%d.%d", ip1, ip2, ip3, ip4);
+    snprintf(ip, LEN, "%d.%d.%d.%d", ip1, ip2, ip3, ip4);
     *port = port1 * 256 + port2;
     
     return 0;
@@ -195,11 +186,11 @@ int read_ftp_response(int socket, char* buffer) {
     size_t total_read = 0;
     int code = 0;
     char byte;
-    char line[MAX_LENGTH];
+    char line[LEN];
     size_t line_length = 0;
     int multiline = 0;  
 
-    memset(buffer, 0, MAX_LENGTH); 
+    memset(buffer, 0, LEN); 
 
     while (1) {
         
@@ -209,7 +200,7 @@ int read_ftp_response(int socket, char* buffer) {
             return -1;
         }
 
-        if (line_length < MAX_LENGTH - 1) {
+        if (line_length < LEN - 1) {
             line[line_length++] = byte;
         }
         line[line_length] = '\0';
@@ -220,13 +211,13 @@ int read_ftp_response(int socket, char* buffer) {
                     multiline = 1; 
                 } else if (line[3] == ' ') {
                     if (!multiline || (multiline && strncmp(line, buffer, 3) == 0)) {
-                        strncat(buffer, line, MAX_LENGTH - total_read - 1);
+                        strncat(buffer, line, LEN - total_read - 1);
                         break; 
                     }
                 }
             }
 
-            strncat(buffer, line, MAX_LENGTH - total_read - 1);
+            strncat(buffer, line, LEN - total_read - 1);
             total_read += line_length;
             line_length = 0; 
         }
@@ -237,8 +228,8 @@ int read_ftp_response(int socket, char* buffer) {
 
 // Request file transfer
 int request_file(int socket, const char *resource) {
-    char command[MAX_LENGTH];
-    char response[MAX_LENGTH];
+    char command[LEN];
+    char response[LEN];
 
     snprintf(command, sizeof(command), "RETR %s\r\n", resource);
     if (write(socket, command, strlen(command)) <= 0) {
@@ -251,7 +242,7 @@ int request_file(int socket, const char *resource) {
 }
 
 int receive_file(int control_socket, int data_socket, const char *filename) {
-    char buffer[MAX_LENGTH];
+    char buffer[LEN];
     ssize_t bytes_received;
     FILE *file = fopen(filename, "wb");
     
@@ -269,14 +260,14 @@ int receive_file(int control_socket, int data_socket, const char *filename) {
     }
     
     fclose(file);
-    char response[MAX_LENGTH];
+    char response[LEN];
     return read_ftp_response(control_socket, response);
 }
 
 // Close all connections
 int close_connections(int control_socket, int data_socket) {
     char command[] = "QUIT\r\n";
-    char response[MAX_LENGTH];
+    char response[LEN];
     
     write(control_socket, command, strlen(command));
     read_ftp_response(control_socket, response);
@@ -304,25 +295,25 @@ int main(int argc, char **argv) {
     
     log_message(LOG_INFO, "Connecting to %s (%s) as user %s", url.host, url.ip, url.user);
     
-    int control_socket = create_control_socket(url.ip, FTP_PORT);
+    int control_socket = create_control_socket(url.ip, PORT);
     if (control_socket < 0) {
         return 1;
     }
     
-    char response[MAX_LENGTH];
-    if (read_ftp_response(control_socket, response) != SV_READY4AUTH) {
+    char response[LEN];
+    if (read_ftp_response(control_socket, response) != ST_READY4AUTH) {
         log_message(LOG_ERROR, "Server not ready");
         close(control_socket);
         return 1;
     }
     
-    if (authenticate(control_socket, url.user, url.password) != SV_LOGINSUCCESS) {
+    if (authenticate(control_socket, url.user, url.password) != ST_LOGINSUCCESS) {
         log_message(LOG_ERROR, "Authentication failed");
         close(control_socket);
         return 1;
     }
     
-    char data_ip[MAX_LENGTH];
+    char data_ip[LEN];
     int data_port;
     if (enter_passive_mode(control_socket, data_ip, &data_port) != 0) {
         log_message(LOG_ERROR, "Failed to enter passive mode");
@@ -337,7 +328,7 @@ int main(int argc, char **argv) {
     }
 
     int transfer_status = request_file(control_socket, url.resource);
-    if (transfer_status != SV_READY4TRANSFER && transfer_status != SV_DATACONNECTION_OPEN) {
+    if (transfer_status != ST_READY4TRANSF && transfer_status != ST_DATACONNECTION_OPEN) {
         log_message(LOG_ERROR, "Failed to request file");
         close_connections(control_socket, data_socket);
         return 1;
@@ -346,7 +337,7 @@ int main(int argc, char **argv) {
     log_message(LOG_INFO, "Downloading %s...", url.file);
     int received_status = receive_file(control_socket, data_socket, url.file);
 
-    if (received_status != SV_TRANSFER_COMPLETE) {
+    if (received_status != ST_TRANSFER_COMPLETE) {
         log_message(LOG_ERROR, "Might have failed to receive file. Check your files");
         close_connections(control_socket, data_socket);
         return 1;
