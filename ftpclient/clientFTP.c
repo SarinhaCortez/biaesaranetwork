@@ -30,6 +30,8 @@ int parse_url(char *input, struct URL *url) {
     regmatch_t matches[4];
     char pattern[] = "ftp://([^:/@]+:[^:/@]+@)?([^/]+)/(.*)";
     
+    log_message(LOG_DEBUG, "Parsing URL: %s", input);
+
     if (regcomp(&regex, pattern, REG_EXTENDED) != 0) {
         log_message(LOG_ERROR, "Failed to compile regex");
         return -1;
@@ -78,6 +80,8 @@ int parse_url(char *input, struct URL *url) {
     strcpy(url->ip, inet_ntoa(*((struct in_addr *)h->h_addr)));
     
     regfree(&regex);
+    log_message(LOG_DEBUG, "Parsed URL: user=%s, password=%s, host=%s, ip=%s, resource=%s, file=%s", url->user, url->password, url->host, url->ip, url->resource, url->file);
+
     return 0;
 }
 
@@ -87,6 +91,8 @@ int create_control_socket(const char *ip, int port) {
     struct sockaddr_in server;
     struct timeval timeout;
     
+    log_message(LOG_DEBUG, "Creating control socket to %s:%d", ip, port);
+
     socket_desc = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_desc == -1) {
         log_message(LOG_ERROR, "Could not create socket: %s", strerror(errno));
@@ -102,7 +108,7 @@ int create_control_socket(const char *ip, int port) {
         close(socket_desc);
         return -1;
     }
-    
+    log_message(LOG_DEBUG, "Control socket created and connected");
     return socket_desc;
 }
 
@@ -111,6 +117,8 @@ int authenticate(int socket, const char* user, const char* pass) {
     char command[LEN];
     char response[LEN];
     int response_code;
+
+    log_message(LOG_DEBUG, "Authenticating with user: %s", user);
 
     snprintf(command, sizeof(command), "USER %s\r\n", user);
     if (write(socket, command, strlen(command)) < 0) {
@@ -141,6 +149,7 @@ int authenticate(int socket, const char* user, const char* pass) {
     response_code = read_ftp_response(socket, response);
     
     if (response_code == ST_LOGINSUCCESS) {
+        log_message(LOG_DEBUG, "Authentication successful");
         return response_code;
     } else {
         log_message(LOG_ERROR, "Authentication failed. Response: %d", response_code);
@@ -192,6 +201,8 @@ int read_ftp_response(int socket, char* buffer) {
 
     memset(buffer, 0, LEN); 
 
+    log_message(LOG_DEBUG, "Reading FTP response");
+
     while (1) {
         
         n = read(socket, &byte, 1);
@@ -223,6 +234,8 @@ int read_ftp_response(int socket, char* buffer) {
         }
     }
     
+    log_message(LOG_DEBUG, "Full server response: %s", buffer);
+    log_message(LOG_DEBUG, "FTP response code: %d", code);
     return code;
 }
 
@@ -231,6 +244,8 @@ int request_file(int socket, const char *resource) {
     char command[LEN];
     char response[LEN];
 
+    log_message(LOG_DEBUG, "Requesting file: %s", resource);
+
     snprintf(command, sizeof(command), "RETR %s\r\n", resource);
     if (write(socket, command, strlen(command)) <= 0) {
         log_message(LOG_ERROR, "Failed to send RETR command: %s", strerror(errno));
@@ -238,6 +253,8 @@ int request_file(int socket, const char *resource) {
     }
 
     int code = read_ftp_response(socket, response);
+    log_message(LOG_DEBUG, "RETR response: %s", response);
+    log_message(LOG_DEBUG, "File request response code: %d", code);
     return code;
 }
 
@@ -251,6 +268,8 @@ int receive_file(int control_socket, int data_socket, const char *filename) {
         return -1;
     }
     
+    log_message(LOG_DEBUG, "Receiving file: %s", filename);
+
     while ((bytes_received = read(data_socket, buffer, sizeof(buffer))) > 0) {
         if (fwrite(buffer, 1, bytes_received, file) != bytes_received) {
             log_message(LOG_ERROR, "Failed to write to file");
@@ -261,14 +280,17 @@ int receive_file(int control_socket, int data_socket, const char *filename) {
     
     fclose(file);
     char response[LEN];
-    return read_ftp_response(control_socket, response);
+    int code = read_ftp_response(control_socket, response);
+    log_message(LOG_DEBUG, "File receive response code: %d", code);
+    return code;
 }
 
 // Close all connections
 int close_connections(int control_socket, int data_socket) {
     char command[] = "QUIT\r\n";
     char response[LEN];
-    
+    log_message(LOG_DEBUG, "Closing connections");
+
     write(control_socket, command, strlen(command));
     read_ftp_response(control_socket, response);
     

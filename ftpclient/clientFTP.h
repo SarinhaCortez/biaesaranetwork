@@ -40,6 +40,7 @@ INSPIRED BY: https://gist.github.com/XBachirX/865b00ba7a7c86b4fc2d7443b2c4f238
 
 #define LOG_INFO    "[INFO] "
 #define LOG_ERROR   "[ERROR] "
+#define LOG_DEBUG   "[DEBUG] "
 
 // URL structure
 struct URL { char user[LEN],password[LEN],host[LEN],ip[LEN],resource[LEN],file[LEN]; };
