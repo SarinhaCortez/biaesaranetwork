@@ -22,7 +22,35 @@ void log_message(const char* level, const char* format, ...) {
     
     printf("\n");
     fflush(stdout);
+   
 }
+
+//BIN MODE
+int bin_mode(int socket) {
+    char command[LEN];
+    char response[LEN];
+    int response_code;
+
+    log_message(LOG_DEBUG, "Putting server in bin mode %s", "I");
+
+    snprintf(command, sizeof(command), "TYPE I\r\n");
+    if (write(socket, command, strlen(command)) < 0) {
+        log_message(LOG_ERROR, "Failed to send bi ncommand: %s", strerror(errno));
+        return -1;
+    }
+    
+    response_code = read_ftp_response(socket, response);
+    
+    if (response_code == ST_SWITCHTOBIN) {
+        log_message(LOG_DEBUG, "SUCCESSFUL BIN");
+        return response_code;
+    } else {
+        log_message(LOG_ERROR, "BIN failed. Response: %d", response_code);
+        return -1;
+    }
+}
+    
+
 
 // URL parsing and validation
 int parse_url(char *input, struct URL *url) {
@@ -335,6 +363,12 @@ int main(int argc, char **argv) {
         return 1;
     }
     
+    if(bin_mode(control_socket) != ST_SWITCHTOBIN){
+		log_message(LOG_ERROR, "Error in switching to bin");
+        close(control_socket);
+        return 1;
+	}
+		
     char data_ip[LEN];
     int data_port;
     if (enter_passive_mode(control_socket, data_ip, &data_port) != 0) {
