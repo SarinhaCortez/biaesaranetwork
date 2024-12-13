@@ -47,6 +47,7 @@ INSPIRED BY: https://gist.github.com/XBachirX/865b00ba7a7c86b4fc2d7443b2c4f238
 struct URL { char user[LEN],password[LEN],host[LEN],ip[LEN],resource[LEN],file[LEN]; };
 
 void log_message(const char* level, const char* format, ...);
+int bin_mode(int socket);
 int parse_url(char *input, struct URL *url);
 int create_control_socket(const char *ip, int port);
 int authenticate(int socket, const char* user, const char* pass);
