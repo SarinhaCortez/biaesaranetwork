@@ -23,7 +23,7 @@ INSPIRED BY: https://gist.github.com/XBachirX/865b00ba7a7c86b4fc2d7443b2c4f238
 #include <stdarg.h>
 
 #define PORT 21
-#define LEN 10000
+#define LEN 1024
 
 //status
 #define ST_DATACONNECTION_OPEN 125
