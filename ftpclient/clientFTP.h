@@ -23,7 +23,7 @@ INSPIRED BY: https://gist.github.com/XBachirX/865b00ba7a7c86b4fc2d7443b2c4f238
 #include <stdarg.h>
 
 #define PORT 21
-#define LEN 1024
+#define LEN 10000
 
 //status
 #define ST_DATACONNECTION_OPEN 125
@@ -34,6 +34,7 @@ INSPIRED BY: https://gist.github.com/XBachirX/865b00ba7a7c86b4fc2d7443b2c4f238
 #define ST_PASVMODE 227
 #define ST_LOGINSUCCESS 230
 #define ST_READY4PASS 331
+#define ST_SWITCHTOBIN 200
 
 #define DF_USR "anonymous"
 #define DF_PWD "anonymous"
